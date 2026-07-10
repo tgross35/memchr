@@ -1,0 +1,71 @@
+$ git describe
+2.8.3
+
+$ uname -a
+Linux dev-s390x 7.0.0-27-generic #27-Ubuntu SMP PREEMPT Fri Jun 19 09:38:22 UTC 2026 s390x GNU/Linux
+
+$ ldd --version 2>&1 || true
+ldd (Ubuntu GLIBC 2.43-2ubuntu2) 2.43
+Copyright (C) 2024 Free Software Foundation, Inc.
+This is free software; see the source for copying conditions.  There is NO
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+Written by Roland McGrath and Ulrich Drepper.
+
+$ lscpu
+Architecture:                            s390x
+CPU op-mode(s):                          32-bit, 64-bit
+Byte Order:                              Big Endian
+CPU(s):                                  8
+On-line CPU(s) list:                     0-7
+Vendor ID:                               IBM/S390
+Model name:                              -
+Machine type:                            8561
+Thread(s) per core:                      1
+Core(s) per socket:                      1
+Socket(s) per book:                      1
+Book(s) per drawer:                      1
+Drawer(s):                               8
+CPU dynamic MHz:                         5200
+CPU static MHz:                          5200
+BogoMIPS:                                24038.00
+Dispatching mode:                        horizontal
+Flags:                                   esan3 zarch stfle msa ldisp eimm dfp edat etf3eh highgprs te vx vxd vxe gs vxe2 vxp sort dflt sie
+Hypervisor:                              z/VM 7.3.0
+Hypervisor vendor:                       IBM
+Virtualization type:                     full
+L1d cache:                               1 MiB (8 instances)
+L1i cache:                               1 MiB (8 instances)
+L2d cache:                               32 MiB (8 instances)
+L2i cache:                               32 MiB (8 instances)
+L3 cache:                                256 MiB
+L4 cache:                                960 MiB
+NUMA node(s):                            1
+NUMA node0 CPU(s):                       0-7
+Vulnerability Gather data sampling:      Not affected
+Vulnerability Ghostwrite:                Not affected
+Vulnerability Indirect target selection: Not affected
+Vulnerability Itlb multihit:             Not affected
+Vulnerability L1tf:                      Not affected
+Vulnerability Mds:                       Not affected
+Vulnerability Meltdown:                  Not affected
+Vulnerability Mmio stale data:           Not affected
+Vulnerability Old microcode:             Not affected
+Vulnerability Reg file data sampling:    Not affected
+Vulnerability Retbleed:                  Not affected
+Vulnerability Spec rstack overflow:      Not affected
+Vulnerability Spec store bypass:         Not affected
+Vulnerability Spectre v1:                Mitigation; __user pointer sanitization
+Vulnerability Spectre v2:                Mitigation; etokens
+Vulnerability Srbds:                     Not affected
+Vulnerability Tsa:                       Not affected
+Vulnerability Tsx async abort:           Not affected
+Vulnerability Vmscape:                   Not affected
+
+$ rustc -vV
+rustc 1.96.1 (31fca3adb 2026-06-26)
+binary: rustc
+commit-hash: 31fca3adb283cc9dfd56b49cdee9a96eb9c96ffd
+commit-date: 2026-06-26
+host: s390x-unknown-linux-gnu
+release: 1.96.1
+LLVM version: 22.1.2

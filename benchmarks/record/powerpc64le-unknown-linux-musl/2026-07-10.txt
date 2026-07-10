@@ -2,31 +2,30 @@ $ git describe
 2.8.3
 
 $ uname -a
-Linux theta 7.1.3-200.fc44.ppc64le #1 SMP PREEMPT_DYNAMIC Sat Jul  4 19:07:58 UTC 2026 ppc64le GNU/Linux
+Linux aludra 7.0.10-0-stable #1-Alpine SMP PREEMPT 2026-05-23 11:50:19 ppc64le GNU/Linux
 
-$ ldd --version || true
-ldd (GNU libc) 2.43
-Copyright (C) 2024 Free Software Foundation, Inc.
-This is free software; see the source for copying conditions.  There is NO
-warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-Written by Roland McGrath and Ulrich Drepper.
+$ ldd --version 2>&1 || true
+musl libc (powerpc64le)
+Version 1.2.6
+Dynamic Program Loader
+Usage: /lib/ld-musl-powerpc64le.so.1 [options] [--] pathname
 
 $ lscpu
 Architecture:                            ppc64le
 Byte Order:                              Little Endian
-CPU(s):                                  16
-On-line CPU(s) list:                     0-15
+CPU(s):                                  40
+On-line CPU(s) list:                     0-39
 Model name:                              POWER8 (architected), altivec supported
 Model:                                   2.1 (pvr 004b 0201)
 Thread(s) per core:                      8
-Core(s) per socket:                      2
+Core(s) per socket:                      5
 Socket(s):                               1
 Hypervisor vendor:                       KVM
 Virtualization type:                     para
-L1d cache:                               128 KiB (2 instances)
-L1i cache:                               64 KiB (2 instances)
+L1d cache:                               320 KiB (5 instances)
+L1i cache:                               160 KiB (5 instances)
 NUMA node(s):                            1
-NUMA node0 CPU(s):                       0-15
+NUMA node0 CPU(s):                       0-39
 Vulnerability Gather data sampling:      Not affected
 Vulnerability Ghostwrite:                Not affected
 Vulnerability Indirect target selection: Not affected
@@ -48,10 +47,10 @@ Vulnerability Tsx async abort:           Not affected
 Vulnerability Vmscape:                   Not affected
 
 $ rustc -vV
-rustc 1.96.1 (31fca3adb 2026-06-26) (Fedora 1.96.1-1.fc44)
+rustc 1.96.1 (31fca3adb 2026-06-26) (Alpine Linux Rust 1.96.1-r0)
 binary: rustc
 commit-hash: 31fca3adb283cc9dfd56b49cdee9a96eb9c96ffd
 commit-date: 2026-06-26
-host: powerpc64le-unknown-linux-gnu
+host: powerpc64le-alpine-linux-musl
 release: 1.96.1
 LLVM version: 22.1.8
