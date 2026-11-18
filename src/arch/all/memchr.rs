@@ -25,21 +25,23 @@ expected match frequency.
 
 use crate::{arch::generic::memchr as generic, ext::Pointer};
 
+type Chunk = u128;
+
 /// The number of bytes in a single `usize` value.
-const USIZE_BYTES: usize = (usize::BITS / 8) as usize;
+const CHUNK_BYTES: usize = (Chunk::BITS / 8) as usize;
 /// The bits that must be zero for a `*const usize` to be properly aligned.
-const USIZE_ALIGN: usize = USIZE_BYTES - 1;
+const CHUNK_ALIGN: usize = CHUNK_BYTES - 1;
 
 /// Finds all occurrences of a single byte in a haystack.
 #[derive(Clone, Copy, Debug)]
 pub struct One {
     s1: u8,
-    v1: usize,
+    v1: Chunk,
 }
 
 impl One {
     /// The number of bytes we examine per each iteration of our search loop.
-    const LOOP_BYTES: usize = 2 * USIZE_BYTES;
+    const LOOP_BYTES: usize = 2 * CHUNK_BYTES;
 
     /// Create a new searcher that finds occurrences of the byte given.
     #[inline]
@@ -134,13 +136,13 @@ impl One {
         }
         let confirm = |b| self.confirm(b);
         let len = end.distance(start);
-        if len < USIZE_BYTES {
+        if len < CHUNK_BYTES {
             return generic::fwd_byte_by_byte(start, end, confirm);
         }
 
         // The start of the search may not be aligned to `*const usize`,
         // so we do an unaligned load here.
-        let chunk = start.cast::<usize>().read_unaligned();
+        let chunk = start.cast::<Chunk>().read_unaligned();
         if self.has_needle(chunk) {
             return generic::fwd_byte_by_byte(start, end, confirm);
         }
@@ -151,17 +153,17 @@ impl One {
         // unaligned offset, but that's okay as we're only here if that
         // above didn't find a match.
         let mut cur =
-            start.add(USIZE_BYTES - (start.as_usize() & USIZE_ALIGN));
+            start.add(CHUNK_BYTES - (start.as_usize() & CHUNK_ALIGN));
         debug_assert!(cur > start);
         if len <= One::LOOP_BYTES {
             return generic::fwd_byte_by_byte(cur, end, confirm);
         }
         debug_assert!(end.sub(One::LOOP_BYTES) >= start);
         while cur <= end.sub(One::LOOP_BYTES) {
-            debug_assert_eq!(0, cur.as_usize() % USIZE_BYTES);
+            debug_assert_eq!(0, cur.as_usize() % CHUNK_BYTES);
 
-            let a = cur.cast::<usize>().read();
-            let b = cur.add(USIZE_BYTES).cast::<usize>().read();
+            let a = cur.cast::<Chunk>().read();
+            let b = cur.add(CHUNK_BYTES).cast::<Chunk>().read();
             if self.has_needle(a) || self.has_needle(b) {
                 break;
             }
@@ -204,25 +206,25 @@ impl One {
         }
         let confirm = |b| self.confirm(b);
         let len = end.distance(start);
-        if len < USIZE_BYTES {
+        if len < CHUNK_BYTES {
             return generic::rev_byte_by_byte(start, end, confirm);
         }
 
-        let chunk = end.sub(USIZE_BYTES).cast::<usize>().read_unaligned();
+        let chunk = end.sub(CHUNK_BYTES).cast::<Chunk>().read_unaligned();
         if self.has_needle(chunk) {
             return generic::rev_byte_by_byte(start, end, confirm);
         }
 
-        let mut cur = end.sub(end.as_usize() & USIZE_ALIGN);
+        let mut cur = end.sub(end.as_usize() & CHUNK_ALIGN);
         debug_assert!(start <= cur && cur <= end);
         if len <= One::LOOP_BYTES {
             return generic::rev_byte_by_byte(start, cur, confirm);
         }
         while cur >= start.add(One::LOOP_BYTES) {
-            debug_assert_eq!(0, cur.as_usize() % USIZE_BYTES);
+            debug_assert_eq!(0, cur.as_usize() % CHUNK_BYTES);
 
-            let a = cur.sub(2 * USIZE_BYTES).cast::<usize>().read();
-            let b = cur.sub(1 * USIZE_BYTES).cast::<usize>().read();
+            let a = cur.sub(2 * CHUNK_BYTES).cast::<Chunk>().read();
+            let b = cur.sub(1 * CHUNK_BYTES).cast::<Chunk>().read();
             if self.has_needle(a) || self.has_needle(b) {
                 break;
             }
@@ -278,7 +280,7 @@ impl One {
     }
 
     #[inline(always)]
-    fn has_needle(&self, chunk: usize) -> bool {
+    fn has_needle(&self, chunk: Chunk) -> bool {
         has_zero_byte(self.v1 ^ chunk)
     }
 
@@ -352,8 +354,8 @@ impl<'a, 'h> DoubleEndedIterator for OneIter<'a, 'h> {
 pub struct Two {
     s1: u8,
     s2: u8,
-    v1: usize,
-    v2: usize,
+    v1: Chunk,
+    v2: Chunk,
 }
 
 impl Two {
@@ -444,13 +446,13 @@ impl Two {
         }
         let confirm = |b| self.confirm(b);
         let len = end.distance(start);
-        if len < USIZE_BYTES {
+        if len < CHUNK_BYTES {
             return generic::fwd_byte_by_byte(start, end, confirm);
         }
 
         // The start of the search may not be aligned to `*const usize`,
         // so we do an unaligned load here.
-        let chunk = start.cast::<usize>().read_unaligned();
+        let chunk = start.cast::<Chunk>().read_unaligned();
         if self.has_needle(chunk) {
             return generic::fwd_byte_by_byte(start, end, confirm);
         }
@@ -461,17 +463,17 @@ impl Two {
         // unaligned offset, but that's okay as we're only here if that
         // above didn't find a match.
         let mut cur =
-            start.add(USIZE_BYTES - (start.as_usize() & USIZE_ALIGN));
+            start.add(CHUNK_BYTES - (start.as_usize() & CHUNK_ALIGN));
         debug_assert!(cur > start);
-        debug_assert!(end.sub(USIZE_BYTES) >= start);
-        while cur <= end.sub(USIZE_BYTES) {
-            debug_assert_eq!(0, cur.as_usize() % USIZE_BYTES);
+        debug_assert!(end.sub(CHUNK_BYTES) >= start);
+        while cur <= end.sub(CHUNK_BYTES) {
+            debug_assert_eq!(0, cur.as_usize() % CHUNK_BYTES);
 
-            let chunk = cur.cast::<usize>().read();
+            let chunk = cur.cast::<Chunk>().read();
             if self.has_needle(chunk) {
                 break;
             }
-            cur = cur.add(USIZE_BYTES);
+            cur = cur.add(CHUNK_BYTES);
         }
         generic::fwd_byte_by_byte(cur, end, confirm)
     }
@@ -510,25 +512,25 @@ impl Two {
         }
         let confirm = |b| self.confirm(b);
         let len = end.distance(start);
-        if len < USIZE_BYTES {
+        if len < CHUNK_BYTES {
             return generic::rev_byte_by_byte(start, end, confirm);
         }
 
-        let chunk = end.sub(USIZE_BYTES).cast::<usize>().read_unaligned();
+        let chunk = end.sub(CHUNK_BYTES).cast::<Chunk>().read_unaligned();
         if self.has_needle(chunk) {
             return generic::rev_byte_by_byte(start, end, confirm);
         }
 
-        let mut cur = end.sub(end.as_usize() & USIZE_ALIGN);
+        let mut cur = end.sub(end.as_usize() & CHUNK_ALIGN);
         debug_assert!(start <= cur && cur <= end);
-        while cur >= start.add(USIZE_BYTES) {
-            debug_assert_eq!(0, cur.as_usize() % USIZE_BYTES);
+        while cur >= start.add(CHUNK_BYTES) {
+            debug_assert_eq!(0, cur.as_usize() % CHUNK_BYTES);
 
-            let chunk = cur.sub(USIZE_BYTES).cast::<usize>().read();
+            let chunk = cur.sub(CHUNK_BYTES).cast::<Chunk>().read();
             if self.has_needle(chunk) {
                 break;
             }
-            cur = cur.sub(USIZE_BYTES);
+            cur = cur.sub(CHUNK_BYTES);
         }
         generic::rev_byte_by_byte(start, cur, confirm)
     }
@@ -543,7 +545,7 @@ impl Two {
     }
 
     #[inline(always)]
-    fn has_needle(&self, chunk: usize) -> bool {
+    fn has_needle(&self, chunk: Chunk) -> bool {
         has_zero_byte(self.v1 ^ chunk) || has_zero_byte(self.v2 ^ chunk)
     }
 
@@ -609,9 +611,9 @@ pub struct Three {
     s1: u8,
     s2: u8,
     s3: u8,
-    v1: usize,
-    v2: usize,
-    v3: usize,
+    v1: Chunk,
+    v2: Chunk,
+    v3: Chunk,
 }
 
 impl Three {
@@ -708,13 +710,13 @@ impl Three {
         }
         let confirm = |b| self.confirm(b);
         let len = end.distance(start);
-        if len < USIZE_BYTES {
+        if len < CHUNK_BYTES {
             return generic::fwd_byte_by_byte(start, end, confirm);
         }
 
         // The start of the search may not be aligned to `*const usize`,
         // so we do an unaligned load here.
-        let chunk = start.cast::<usize>().read_unaligned();
+        let chunk = start.cast::<Chunk>().read_unaligned();
         if self.has_needle(chunk) {
             return generic::fwd_byte_by_byte(start, end, confirm);
         }
@@ -725,17 +727,17 @@ impl Three {
         // unaligned offset, but that's okay as we're only here if that
         // above didn't find a match.
         let mut cur =
-            start.add(USIZE_BYTES - (start.as_usize() & USIZE_ALIGN));
+            start.add(CHUNK_BYTES - (start.as_usize() & CHUNK_ALIGN));
         debug_assert!(cur > start);
-        debug_assert!(end.sub(USIZE_BYTES) >= start);
-        while cur <= end.sub(USIZE_BYTES) {
-            debug_assert_eq!(0, cur.as_usize() % USIZE_BYTES);
+        debug_assert!(end.sub(CHUNK_BYTES) >= start);
+        while cur <= end.sub(CHUNK_BYTES) {
+            debug_assert_eq!(0, cur.as_usize() % CHUNK_BYTES);
 
-            let chunk = cur.cast::<usize>().read();
+            let chunk = cur.cast::<Chunk>().read();
             if self.has_needle(chunk) {
                 break;
             }
-            cur = cur.add(USIZE_BYTES);
+            cur = cur.add(CHUNK_BYTES);
         }
         generic::fwd_byte_by_byte(cur, end, confirm)
     }
@@ -774,25 +776,25 @@ impl Three {
         }
         let confirm = |b| self.confirm(b);
         let len = end.distance(start);
-        if len < USIZE_BYTES {
+        if len < CHUNK_BYTES {
             return generic::rev_byte_by_byte(start, end, confirm);
         }
 
-        let chunk = end.sub(USIZE_BYTES).cast::<usize>().read_unaligned();
+        let chunk = end.sub(CHUNK_BYTES).cast::<Chunk>().read_unaligned();
         if self.has_needle(chunk) {
             return generic::rev_byte_by_byte(start, end, confirm);
         }
 
-        let mut cur = end.sub(end.as_usize() & USIZE_ALIGN);
+        let mut cur = end.sub(end.as_usize() & CHUNK_ALIGN);
         debug_assert!(start <= cur && cur <= end);
-        while cur >= start.add(USIZE_BYTES) {
-            debug_assert_eq!(0, cur.as_usize() % USIZE_BYTES);
+        while cur >= start.add(CHUNK_BYTES) {
+            debug_assert_eq!(0, cur.as_usize() % CHUNK_BYTES);
 
-            let chunk = cur.sub(USIZE_BYTES).cast::<usize>().read();
+            let chunk = cur.sub(CHUNK_BYTES).cast::<Chunk>().read();
             if self.has_needle(chunk) {
                 break;
             }
-            cur = cur.sub(USIZE_BYTES);
+            cur = cur.sub(CHUNK_BYTES);
         }
         generic::rev_byte_by_byte(start, cur, confirm)
     }
@@ -807,7 +809,7 @@ impl Three {
     }
 
     #[inline(always)]
-    fn has_needle(&self, chunk: usize) -> bool {
+    fn has_needle(&self, chunk: Chunk) -> bool {
         has_zero_byte(self.v1 ^ chunk)
             || has_zero_byte(self.v2 ^ chunk)
             || has_zero_byte(self.v3 ^ chunk)
@@ -874,12 +876,12 @@ impl<'a, 'h> DoubleEndedIterator for ThreeIter<'a, 'h> {
 ///
 /// From "Matters Computational" by J. Arndt.
 #[inline(always)]
-fn has_zero_byte(x: usize) -> bool {
+fn has_zero_byte(x: Chunk) -> bool {
     // "The idea is to subtract one from each of the bytes and then look for
     // bytes where the borrow propagated all the way to the most significant
     // bit."
-    const LO: usize = splat(0x01);
-    const HI: usize = splat(0x80);
+    const LO: Chunk = splat(0x01);
+    const HI: Chunk = splat(0x80);
 
     (x.wrapping_sub(LO) & !x & HI) != 0
 }
@@ -889,9 +891,9 @@ fn has_zero_byte(x: usize) -> bool {
 /// `01001110` in binary, then the returned value on a 32-bit system would be:
 /// `01001110_01001110_01001110_01001110`.
 #[inline(always)]
-const fn splat(b: u8) -> usize {
+const fn splat(b: u8) -> Chunk {
     // TODO: use `usize::from` once it can be used in const context.
-    (b as usize) * (usize::MAX / 255)
+    (b as Chunk) * (Chunk::MAX / 255)
 }
 
 #[cfg(test)]
